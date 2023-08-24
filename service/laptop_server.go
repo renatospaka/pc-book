@@ -8,8 +8,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/renatospaka/pc-book/pb"
 	"google.golang.org/grpc/codes"
-	// "google.golang.org/grpc/internal/status"
-	"google.golang.org/protobuf"
+	"google.golang.org/grpc/status"
+	// // "google.golang.org/grpc/internal/status"
+	// "google.golang.org/protobuf"
 )
 
 type LaptopServer struct {
@@ -27,12 +28,12 @@ func (s *LaptopServer) CreateLaptop(ctx context.Context, req *pb.CreateLaptopReq
 	if len(laptop.Id) > 0 {
 		_, err := uuid.Parse(laptop.Id)
 		if err != nil {
-			return nil, protobuf.Errorf(codes.InvalidArgument, "laptop ID is not a valid uuid: %v\n", err)
+			return nil, status.Errorf(codes.InvalidArgument,"laptop ID is not a valid uuid: %v\n", err)
 		}
 	} else {
 		id, err := uuid.NewRandom()
 		if err != nil {
-			return nil, protobuf.Errorf(codes.Internal, "cannot generate a new laptop ID: %v\n", err)
+			return nil, status.Errorf(codes.Internal, "cannot generate a new laptop ID: %v\n", err)
 		}
 		laptop.Id = id.String()
 	}
@@ -45,7 +46,7 @@ func (s *LaptopServer) CreateLaptop(ctx context.Context, req *pb.CreateLaptopReq
 		if errors.Is(err, ErrAlreadyExists) {
 			code = codes.AlreadyExists
 		}
-		return nil, protobuf.Errorf(code, "cannot save laptop to the store: %v", err)
+		return nil, status.Errorf(code, "cannot save laptop to the store: %v", err)
 	}
 
 	log.Printf("saved laptop with id: %s\n", laptop.Id)
