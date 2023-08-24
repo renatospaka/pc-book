@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/jinzhu/copier"
-
 	"github.com/renatospaka/pc-book/pb"
 )
 
@@ -43,7 +42,7 @@ func (db *InMemoryLaptopStore) Save (laptop *pb.Laptop) error {
 	other := &pb.Laptop{}
 	err := copier.Copy(other, laptop)
 	if err != nil {
-		return fmt.Errorf("cannot copy laptop data: %v\n", err)
+		return fmt.Errorf("cannot copy laptop data: %v", err)
 	}
 
 	db.data[other.Id] = other

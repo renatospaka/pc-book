@@ -9,16 +9,16 @@ import (
 	"github.com/renatospaka/pc-book/pb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	// // "google.golang.org/grpc/internal/status"
-	// "google.golang.org/protobuf"
 )
 
 type LaptopServer struct {
 	Store LaptopStore
 }
 
-func NewLaptopServer() *LaptopServer {
-	return &LaptopServer{}
+func NewLaptopServer(store LaptopStore) *LaptopServer {
+	return &LaptopServer{
+		Store: store,
+	}
 }
 
 func (s *LaptopServer) CreateLaptop(ctx context.Context, req *pb.CreateLaptopRequest) (*pb.CreateLaptopResponse, error) {
@@ -28,7 +28,7 @@ func (s *LaptopServer) CreateLaptop(ctx context.Context, req *pb.CreateLaptopReq
 	if len(laptop.Id) > 0 {
 		_, err := uuid.Parse(laptop.Id)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument,"laptop ID is not a valid uuid: %v\n", err)
+			return nil, status.Errorf(codes.InvalidArgument, "laptop ID is not a valid uuid: %v\n", err)
 		}
 	} else {
 		id, err := uuid.NewRandom()
@@ -55,3 +55,6 @@ func (s *LaptopServer) CreateLaptop(ctx context.Context, req *pb.CreateLaptopReq
 	}
 	return res, nil
 }
+
+// mustEmbedUnimplementedLaptopServiceServer implements pb.LaptopServiceServer.
+func (*LaptopServer) mustEmbedUnimplementedLaptopServiceServer() {}
