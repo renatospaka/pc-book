@@ -13,6 +13,7 @@ import (
 
 type LaptopServer struct {
 	Store LaptopStore
+	pb.UnimplementedLaptopServiceServer
 }
 
 func NewLaptopServer(store LaptopStore) *LaptopServer {
@@ -20,6 +21,7 @@ func NewLaptopServer(store LaptopStore) *LaptopServer {
 		Store: store,
 	}
 }
+
 
 func (s *LaptopServer) CreateLaptop(ctx context.Context, req *pb.CreateLaptopRequest) (*pb.CreateLaptopResponse, error) {
 	laptop := req.GetLaptop()
@@ -55,6 +57,3 @@ func (s *LaptopServer) CreateLaptop(ctx context.Context, req *pb.CreateLaptopReq
 	}
 	return res, nil
 }
-
-// mustEmbedUnimplementedLaptopServiceServer implements pb.LaptopServiceServer.
-func (*LaptopServer) mustEmbedUnimplementedLaptopServiceServer() {}
