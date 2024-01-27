@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/renatospaka/pc-book/pb"
@@ -13,6 +14,7 @@ import (
 
 type LaptopServer struct {
 	Store LaptopStore
+	pb.UnimplementedLaptopServiceServer
 }
 
 func NewLaptopServer(store LaptopStore) *LaptopServer {
@@ -20,6 +22,7 @@ func NewLaptopServer(store LaptopStore) *LaptopServer {
 		Store: store,
 	}
 }
+
 
 func (s *LaptopServer) CreateLaptop(ctx context.Context, req *pb.CreateLaptopRequest) (*pb.CreateLaptopResponse, error) {
 	laptop := req.GetLaptop()
@@ -36,6 +39,19 @@ func (s *LaptopServer) CreateLaptop(ctx context.Context, req *pb.CreateLaptopReq
 			return nil, status.Errorf(codes.Internal, "cannot generate a new laptop ID: %v\n", err)
 		}
 		laptop.Id = id.String()
+	}
+
+	// do some heavy processing
+	time.Sleep(6 * time.Second)
+
+	if ctx.Err() == context.Canceled {
+		log.Println("request is canceled")
+		return nil, status.Error(codes.Canceled, "request is canceled")
+	}
+
+	if ctx.Err() == context.DeadlineExceeded {
+		log.Println("deadline is exceeded")
+		return nil, status.Error(codes.DeadlineExceeded, "deadline is exceeded")
 	}
 
 	//save laptop to the database
@@ -55,6 +71,3 @@ func (s *LaptopServer) CreateLaptop(ctx context.Context, req *pb.CreateLaptopReq
 	}
 	return res, nil
 }
-
-// mustEmbedUnimplementedLaptopServiceServer implements pb.LaptopServiceServer.
-func (*LaptopServer) mustEmbedUnimplementedLaptopServiceServer() {}
