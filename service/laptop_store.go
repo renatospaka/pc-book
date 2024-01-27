@@ -1,9 +1,12 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log"
 	"sync"
+	"time"
 
 	"github.com/jinzhu/copier"
 	"github.com/renatospaka/pc-book/pb"
@@ -14,7 +17,7 @@ var ErrAlreadyExists = errors.New("record already exists")
 type LaptopStore interface {
 	Save(laptop *pb.Laptop) error
 	Find(id string) (*pb.Laptop, error)
-	Search(filter *pb.Filter, found func(laptop *pb.Laptop) error) error
+	Search(ctx context.Context, filter *pb.Filter, found func(laptop *pb.Laptop) error) error
 }
 
 type InMemoryLaptopStore struct {
@@ -63,11 +66,19 @@ func (db *InMemoryLaptopStore) Find(id string) (*pb.Laptop, error) {
 	return deepCopy(laptop)
 }
 
-func (db *InMemoryLaptopStore) Search(filter *pb.Filter, found func(laptop *pb.Laptop) error) error {
+func (db *InMemoryLaptopStore) Search(ctx context.Context, filter *pb.Filter, found func(laptop *pb.Laptop) error) error {
 	db.mutex.RLock()
 	defer db.mutex.RUnlock()
 
 	for _, laptop := range db.data {
+		time.Sleep(time.Second)
+		log.Print("checking laptop: ", laptop.GetId())
+
+		if ctx.Err() == context.Canceled || ctx.Err() == context.DeadlineExceeded {
+			log.Print("context is cancelled")
+			return errors.New("context is cancelled")
+		}
+
 		if isQualified(filter, laptop) {
 			//deep copy
 			other, err := deepCopy(laptop)

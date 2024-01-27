@@ -22,7 +22,6 @@ func NewLaptopServer(store LaptopStore) *LaptopServer {
 	}
 }
 
-
 func (s *LaptopServer) CreateLaptop(ctx context.Context, req *pb.CreateLaptopRequest) (*pb.CreateLaptopResponse, error) {
 	laptop := req.GetLaptop()
 	log.Printf("receive a create-laptop request with id: %s\n", laptop.Id)
@@ -75,7 +74,9 @@ func (s *LaptopServer) SearchLaptop(req *pb.SearchLaptopRequest, stream pb.Lapto
 	filter := req.GetFilter()
 	log.Printf("receive a search-laptop request with filter: %v", filter)
 
-	err := s.Store.Search(filter, 
+	err := s.Store.Search(
+		stream.Context(),
+		filter, 
 		func(laptop *pb.Laptop) error {
 			res := &pb.SearchLaptopResponse{Laptop: laptop}
 			err := stream.Send(res)
