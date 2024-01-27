@@ -12,13 +12,15 @@ import (
 )
 
 type LaptopServer struct {
-	Store LaptopStore
+	laptopStore LaptopStore
+	imageStore ImageStore
 	pb.UnimplementedLaptopServiceServer
 }
 
-func NewLaptopServer(store LaptopStore) *LaptopServer {
+func NewLaptopServer(laptopStore LaptopStore, imageStore ImageStore) *LaptopServer {
 	return &LaptopServer{
-		Store: store,
+		laptopStore:                      laptopStore,
+		imageStore:                       imageStore,
 	}
 }
 
@@ -39,9 +41,6 @@ func (s *LaptopServer) CreateLaptop(ctx context.Context, req *pb.CreateLaptopReq
 		laptop.Id = id.String()
 	}
 
-	// do some heavy processing
-	// time.Sleep(6 * time.Second)
-
 	if ctx.Err() == context.Canceled {
 		log.Println("request is canceled")
 		return nil, status.Error(codes.Canceled, "request is canceled")
@@ -54,7 +53,7 @@ func (s *LaptopServer) CreateLaptop(ctx context.Context, req *pb.CreateLaptopReq
 
 	//save laptop to the database
 	//instead, save it to a in-memory struct
-	err := s.Store.Save(laptop)
+	err := s.laptopStore.Save(laptop)
 	if err != nil {
 		code := codes.Internal
 		if errors.Is(err, ErrAlreadyExists) {
@@ -74,7 +73,7 @@ func (s *LaptopServer) SearchLaptop(req *pb.SearchLaptopRequest, stream pb.Lapto
 	filter := req.GetFilter()
 	log.Printf("receive a search-laptop request with filter: %v", filter)
 
-	err := s.Store.Search(
+	err := s.laptopStore.Search(
 		stream.Context(),
 		filter, 
 		func(laptop *pb.Laptop) error {
@@ -94,3 +93,6 @@ func (s *LaptopServer) SearchLaptop(req *pb.SearchLaptopRequest, stream pb.Lapto
 	return nil
 }
 
+func (s *LaptopServer) UploadImage(stream pb.LaptopService_UploadImageServer) error {
+	return nil
+}
