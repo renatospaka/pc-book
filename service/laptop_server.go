@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// maximum 1 megabyte
 const maxImageSize = 1 << 20
 
 type LaptopServer struct {
@@ -43,16 +44,6 @@ func (s *LaptopServer) CreateLaptop(ctx context.Context, req *pb.CreateLaptopReq
 			return nil, status.Errorf(codes.Internal, "cannot generate a new laptop ID: %v\n", err)
 		}
 		laptop.Id = id.String()
-	}
-
-	if ctx.Err() == context.Canceled {
-		log.Println("request is canceled")
-		return nil, status.Error(codes.Canceled, "request is canceled")
-	}
-
-	if ctx.Err() == context.DeadlineExceeded {
-		log.Println("deadline is exceeded")
-		return nil, status.Error(codes.DeadlineExceeded, "deadline is exceeded")
 	}
 
 	//save laptop to the database
@@ -119,6 +110,11 @@ func (s *LaptopServer) UploadImage(stream pb.LaptopService_UploadImageServer) er
 	imageSize := 0
 
 	for {
+		// check for context errors
+		if err := contextError(stream.Context()); err != nil {
+			return err
+		}
+
 		log.Print("waiting to receive more data")
 
 		req, err := stream.Recv()
@@ -132,11 +128,15 @@ func (s *LaptopServer) UploadImage(stream pb.LaptopService_UploadImageServer) er
 
 		chunk := req.GetChunkData()
 		size := len(chunk)
+
+		log.Printf("received a chunk with size: %d", size)
+
 		imageSize += size
 		if imageSize > maxImageSize {
 			return logError(status.Errorf(codes.InvalidArgument, "image is too large: %d > %d", imageSize, maxImageSize))
 		}
 
+		// time.Sleep(time.Second)
 		_, err = imageData.Write(chunk)
 		if err != nil {
 			return logError(status.Errorf(codes.Unknown, "cannot write chunk data: %v", err))
@@ -159,6 +159,17 @@ func (s *LaptopServer) UploadImage(stream pb.LaptopService_UploadImageServer) er
 
 	log.Print("saved image with id %s, size %d", imageID, imageSize)
 	return nil
+}
+
+func contextError(ctx context.Context) error {
+	switch ctx.Err() {
+	case context.Canceled:
+		return logError(status.Error(codes.Canceled, "request is canceled"))
+	case context.DeadlineExceeded:
+		return logError(status.Error(codes.DeadlineExceeded, "deadline is exceeded"))
+	default:
+		return nil
+	}
 }
 
 func logError(err error) error {
