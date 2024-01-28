@@ -157,7 +157,7 @@ func (s *LaptopServer) UploadImage(stream pb.LaptopService_UploadImageServer) er
 		return logError(status.Errorf(codes.Unknown, "cannot send and response: %v", err))
 	}
 
-	log.Print("saved image with id %s, size %d", imageID, imageSize)
+	log.Printf("saved image with id %s, size %d", imageID, imageSize)
 	return nil
 }
 
