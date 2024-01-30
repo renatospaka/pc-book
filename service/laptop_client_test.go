@@ -22,7 +22,7 @@ func TestClientCreateLaptop(t *testing.T) {
 	t.Parallel()
 
 	laptopStore := service.NewInMemoryLaptopStore()
-	serverAddress := startTestLaptopServer(t, laptopStore, nil)
+	serverAddress := startTestLaptopServer(t, laptopStore, nil, nil)
 	laptopClient := newTestLaptopClient(t, serverAddress)
 
 	laptop := sample.NewLaptop()
@@ -86,7 +86,7 @@ func TestClientSearchLaptop(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	serverAddress := startTestLaptopServer(t, laptopStore, nil)
+	serverAddress := startTestLaptopServer(t, laptopStore, nil, nil)
 	laptopClient := newTestLaptopClient(t, serverAddress)
 
 	req := &pb.SearchLaptopRequest{Filter: filter}
@@ -119,7 +119,7 @@ func TestClientUploadImage(t *testing.T) {
 	err := laptopStore.Save(laptop)
 	require.NoError(t, err)
 
-	serverAddress := startTestLaptopServer(t, laptopStore, imageStore)
+	serverAddress := startTestLaptopServer(t, laptopStore, imageStore, nil)
 	laptopClient := newTestLaptopClient(t, serverAddress)
 
 	imagePath := fmt.Sprintf("%s/laptop.jpg", testImageFolder)
@@ -181,8 +181,8 @@ func TestClientUploadImage(t *testing.T) {
 }
 
 
-func startTestLaptopServer(t *testing.T, laptopStore service.LaptopStore, imageStore service.ImageStore) string {
-	laptopServer := service.NewLaptopServer(laptopStore, imageStore)
+func startTestLaptopServer(t *testing.T, laptopStore service.LaptopStore, imageStore service.ImageStore, ratingStore service.RatingStore) string {
+	laptopServer := service.NewLaptopServer(laptopStore, imageStore, ratingStore)
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterLaptopServiceServer(grpcServer, laptopServer)
